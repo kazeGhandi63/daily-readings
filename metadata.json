@@ -1,6 +1,6 @@
 {
   "name": "Daily Readings",
   "description": "A comprehensive application for logging daily and weekly pool readings, including Chlorine, pH, temperature, and more. It automatically calculates the Saturation Index based on Florida regulations to ensure water balance.",
-  "repository": "daily-readings",
+  "repository": "kazeGhandi63/daily-readings",
   "requestFramePermissions": []
 }

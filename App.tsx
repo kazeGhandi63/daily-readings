@@ -105,41 +105,56 @@ const App: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (selectedResort) {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const payload: { resort: string; date: string; data: ResortReadingsPayload } = {
-          resort: selectedResort,
-          date: today,
-          data: {
-            poolAttendant,
-            readings: allReadings
-          }
-        };
-
-        const response = await fetch('/api/readings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (response.ok) {
-          alert('All readings for this resort have been saved!');
-        } else {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to save readings.');
-        }
-
-      } catch (error) {
-        console.error("Failed to save readings to database", error);
-        alert(`Failed to save readings: ${error.message}`);
-      }
-    } else {
+    if (!selectedResort) {
       alert('Please select a resort before saving.');
+      return;
+    }
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const payload: { resort: string; date: string; data: ResortReadingsPayload } = {
+        resort: selectedResort,
+        date: today,
+        data: {
+          poolAttendant,
+          readings: allReadings
+        }
+      };
+
+      const response = await fetch('/api/readings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        alert('All readings for this resort have been saved!');
+        return;
+      }
+      
+      // Handle non-ok responses by trying to parse a JSON error message from the body
+      let errorMessage = `Failed to save readings. Server responded with status ${response.status}.`;
+      try {
+          const errorData = await response.json();
+          // Use a more specific error message from the API if available
+          errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+          // This catch block will be executed if response.json() fails,
+          // which is what happened in the user's screenshot.
+          // We'll stick with the generic error message.
+          console.error("Could not parse error response from server.", e);
+      }
+      throw new Error(errorMessage);
+
+    } catch (error) {
+      console.error("Failed to save readings to database", error);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred.';
+      alert(`Failed to save readings: ${message}`);
     }
   };
+
 
   // Calculate Saturation Index for all pools
   useEffect(() => {

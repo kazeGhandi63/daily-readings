@@ -17,10 +17,10 @@ export const config = {
 };
 
 export default async function handler(req: Request) {
-  const sql = neon(process.env.DATABASE_URL!);
+  try {
+    const sql = neon(process.env.DATABASE_URL!);
 
-  if (req.method === 'GET') {
-    try {
+    if (req.method === 'GET') {
       const { searchParams } = new URL(req.url);
       const resort = searchParams.get('resort');
       const date = searchParams.get('date');
@@ -47,17 +47,9 @@ export default async function handler(req: Request) {
           headers: { 'Content-Type': 'application/json' },
         });
       }
-    } catch (error) {
-      console.error('Database GET Error:', error);
-      return new Response(JSON.stringify({ message: 'Failed to fetch readings', error: error.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
     }
-  }
 
-  if (req.method === 'POST') {
-    try {
+    if (req.method === 'POST') {
       const body = await req.json();
       const { resort, date, data } = body;
 
@@ -80,19 +72,20 @@ export default async function handler(req: Request) {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
-
-    } catch (error) {
-       console.error('Database POST Error:', error);
-       return new Response(JSON.stringify({ message: 'Failed to save readings', error: error.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
     }
-  }
 
-  // Handle other methods
-  return new Response(JSON.stringify({ message: `Method ${req.method} Not Allowed` }), {
-    status: 405,
-    headers: { 'Content-Type': 'application/json', 'Allow': 'GET, POST' },
-  });
+    // Handle other methods
+    return new Response(JSON.stringify({ message: `Method ${req.method} Not Allowed` }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json', 'Allow': 'GET, POST' },
+    });
+    
+  } catch (error) {
+    console.error('API Route Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';
+    return new Response(JSON.stringify({ message: 'Failed to process request', error: errorMessage }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }
